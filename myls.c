@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -11,7 +12,7 @@
 
 int list_all = false;
 bool long_format = false;
-char path_buf[PATHBUFFER];
+char abs_path_buf[PATHBUFFER];
 
 void usage()
 {
@@ -51,10 +52,16 @@ void print_dirent(struct dirent *de)
   else
   {
     struct stat s;
-    if (stat(de->d_name, &s) == -1)
+    char pathbuffer[PATHBUFFER*2+1];
+    int l = strlen(abs_path_buf);
+    int j = strlen(de->d_name);
+    strncpy(pathbuffer, abs_path_buf, l);
+    pathbuffer[l] = '/';
+    strncpy(pathbuffer+l+1, de->d_name, j);
+    if (stat(pathbuffer, &s) == -1)
     {
       int errsv = errno;
-      printf("Error getting stats on file: ");
+      printf("Error getting stats on %s: ", pathbuffer);
       switch (errsv)
       {
         case EACCES: printf("access error"); break;
@@ -73,7 +80,7 @@ void print_dir(const char *dirname)
 {
   DIR *dir;
   struct dirent *de;
-  getcwd(path_buf, PATHBUFFER);
+  getcwd(abs_path_buf, PATHBUFFER);
   if ((dir = opendir(dirname)) == NULL)
   {
     int errsv = errno;
@@ -120,26 +127,14 @@ int main(int argc, char *argv[])
   {
     switch (opt)
     {
-      case 'l':
-        long_format = true;
-        break;
-      case 'a':
-        list_all = true;
-        break;
-      default:
-        usage();
-        exit(1);
+      case 'l': long_format = true; break;
+      case 'a': list_all = true; break;
+      default: usage(); exit(1);
     }
   }
   if (optind != argc)
-  {
     for (int i = optind; i < argc; i++)
-    {
       print_dir(argv[i]);
-    }
-  }
   else
-  {
-    print_dir(path_buf);
-  }
+    print_dir(".");
 }
