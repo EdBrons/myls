@@ -18,6 +18,30 @@ void usage()
   fprintf(stderr, "Usage: myls [-l] [-a] [files...]\n");
 }
 
+void print_long_format(struct dirent *de, struct stat *s)
+{
+    // file type | permissions | number | owner | group | size | last modified | file name
+    nlink_t links = s->st_nlink;
+    uid_t uid = s->st_uid;
+    gid_t gid = s->st_gid;
+    off_t size = s->st_size;
+    struct timespec last_access = s->st_ctim;
+    struct timespec last_modified = s->st_atim;
+    struct timespec last_status_change = s->st_mtim;
+    char ftype;
+    switch (s->st_mode & S_IFMT)
+    {
+      case S_IFBLK: ftype = 'a'; break;
+      case S_IFCHR: ftype = 'b'; break;
+      case S_IFDIR: ftype = 'd'; break;
+      case S_IFIFO: ftype = 'c'; break;
+      case S_IFLNK: ftype = 'e'; break;
+      case S_IFREG: ftype = '-'; break;
+      case S_IFSOCK: ftype = 'g'; break;
+    }
+    printf("%c %s\n", ftype, de->d_name);
+}
+
 void print_dirent(struct dirent *de)
 {
   if (!list_all && de->d_name[0] == '.')
@@ -30,10 +54,18 @@ void print_dirent(struct dirent *de)
     if (stat(de->d_name, &s) == -1)
     {
       int errsv = errno;
-      printf("Error getting stats on file: %d\n", errsv);
+      printf("Error getting stats on file: ");
+      switch (errsv)
+      {
+        case EACCES: printf("access error"); break;
+        case EBADF: printf("badf"); break;
+        case EFAULT: printf("bad address"); break;
+        default: printf("%d", errsv);
+      }
+      printf("\n");
       return;
     }
-    printf("something something something %s\n", de->d_name);
+    print_long_format(de, &s);
   }
 }
 
