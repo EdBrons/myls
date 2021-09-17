@@ -8,11 +8,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#define PATHBUFFER 80
+#define BUFFERSIZE 80
 
 int list_all = false;
 bool long_format = false;
-char abs_path_buf[PATHBUFFER];
 
 void usage()
 {
@@ -43,7 +42,7 @@ void print_long_format(struct dirent *de, struct stat *s)
     printf("%c %s\n", ftype, de->d_name);
 }
 
-void print_dirent(struct dirent *de)
+void print_dirent(struct dirent *de, char *dirname)
 {
   if (!list_all && de->d_name[0] == '.')
     return;
@@ -51,17 +50,25 @@ void print_dirent(struct dirent *de)
     printf("%s ", de->d_name);
   else
   {
+    // make path
+    char path[BUFFERSIZE];
+    int dnl = strlen(dirname);
+    int a = 0;
+    strncpy(path, dirname, dnl);
+    if (dirname[dnl-1] != '/')
+    {
+      path[dnl] = '/';
+      a = 1;
+    }
+    strncpy(path+dnl+1, de->d_name, strlen(de->d_name));
+    path[dnl + a + strlen(de->d_name)] = '\0';
+    printf("path: %s\n", path);
+
     struct stat s;
-    char pathbuffer[PATHBUFFER*2+1];
-    int l = strlen(abs_path_buf);
-    int j = strlen(de->d_name);
-    strncpy(pathbuffer, abs_path_buf, l);
-    pathbuffer[l] = '/';
-    strncpy(pathbuffer+l+1, de->d_name, j);
-    if (stat(pathbuffer, &s) == -1)
+    if (stat(path, &s) == -1)
     {
       int errsv = errno;
-      printf("Error getting stats on %s: ", pathbuffer);
+      printf("myls: error getting stats for %s: ", de->d_name);
       switch (errsv)
       {
         case EACCES: printf("access error"); break;
@@ -80,43 +87,40 @@ void print_dir(const char *dirname)
 {
   DIR *dir;
   struct dirent *de;
-  getcwd(abs_path_buf, PATHBUFFER);
+
   if ((dir = opendir(dirname)) == NULL)
   {
     int errsv = errno;
     printf("myls: cannot open '%s': ", dirname);
     switch (errsv)
     {
-      case EACCES:
-        printf("cannot acccess file or directory\n");
-        break;
-      case ENOENT:
-        printf("no such file or directory\n");
-        break;
-      default:
-        printf("errno: %d\n", errsv);
-        break;
+      case EACCES: printf("cannot acccess file or directory"); break;
+      case ENOENT: printf("no such file or directory"); break;
+      default: printf("errno: %d", errsv); break;
     }
+    printf("\n");
     return;
   }
+
   errno = 0;
   while ((de = readdir(dir)) != NULL)
   {
     if (errno != 0)
     {
       int errsv = errno;
-      if (errsv == EBADF)
+      switch (errsv)
       {
-        printf("myls: cannot access dir entry: invalid directory stream");
-        return;
+        case EBADF: printf("myls: cannot access dir entry: invalid directory stream"); break;
+        default: printf("errno: %d", errsv);
       }
+      printf("\n");
+      return;
     }
     else
-    {
-      print_dirent(de);
-    }
+      print_dirent(de, dirname);
     errno = 0;
   }
+
   printf("\n");
 }
 
@@ -132,6 +136,7 @@ int main(int argc, char *argv[])
       default: usage(); exit(1);
     }
   }
+  struct stat s;
   if (optind != argc)
     for (int i = optind; i < argc; i++)
       print_dir(argv[i]);
