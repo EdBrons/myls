@@ -50,25 +50,32 @@ void print_dirent(struct dirent *de, char *dirname)
     printf("%s ", de->d_name);
   else
   {
-    // make path
+    // redo sometime
     char path[BUFFERSIZE];
-    int dnl = strlen(dirname);
-    int a = 0;
-    strncpy(path, dirname, dnl);
-    if (dirname[dnl-1] != '/')
+    if (strcmp(dirname, "/") == 0)
     {
-      path[dnl] = '/';
-      a = 1;
+      path[0] = '/';
+      path[1] = '\0';
     }
-    strncpy(path+dnl+1, de->d_name, strlen(de->d_name));
-    path[dnl + a + strlen(de->d_name)] = '\0';
-    printf("path: %s\n", path);
+    else
+    {
+      int dnl = strlen(dirname);
+      int a = 0;
+      strncpy(path, dirname, dnl);
+      if (dirname[dnl-1] != '/')
+      {
+        path[dnl] = '/';
+        a = 1;
+      }
+      strncpy(path+dnl+1, de->d_name, strlen(de->d_name));
+      path[dnl + a + strlen(de->d_name)] = '\0';
+    }
 
     struct stat s;
     if (stat(path, &s) == -1)
     {
       int errsv = errno;
-      printf("myls: error getting stats for %s: ", de->d_name);
+      printf("myls: error getting stats for %s: ", path);
       switch (errsv)
       {
         case EACCES: printf("access error"); break;
