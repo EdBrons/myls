@@ -8,18 +8,24 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+// base buffer sized used in program
 #define BUFFERSIZE 80
 
+// globals used for formatting
 int list_all = false;
 bool long_format = false;
 
+// describes usage of program for user
 void usage()
 {
-  fprintf(stderr, "Usage: myls [-l] [-a] [files...]\n");
+  fprintf(stderr, "Usage: ./myls [-l] [-a] [files...]\n");
 }
 
+// prints the dirent with long format
 void print_long_format(struct dirent *de, struct stat *s)
 {
+    // function not complete yet
+    // the function should print the following:
     // file type | permissions | number | owner | group | size | last modified | file name
     nlink_t links = s->st_nlink;
     uid_t uid = s->st_uid;
@@ -42,6 +48,9 @@ void print_long_format(struct dirent *de, struct stat *s)
     printf("%c %s\n", ftype, de->d_name);
 }
 
+// prints dirent depending on the value of list_all and long_format
+// if long_format is true reads the stat struct for that dirent
+// then calls long_format
 void print_dirent(struct dirent *de, char *dirname)
 {
   if (!list_all && de->d_name[0] == '.')
@@ -50,13 +59,19 @@ void print_dirent(struct dirent *de, char *dirname)
     printf("%s ", de->d_name);
   else
   {
-    // redo sometime
+    // redo how the path is constructed sometime
+    // this section of code creates a buffer filled with:
+    // "dirname/de->d_name\0" to be passed to stat
+    // buffer to hold path string
     char path[BUFFERSIZE];
+    // this if statement here handles the case of when dirname is /
     if (strcmp(dirname, "/") == 0)
     {
       path[0] = '/';
       path[1] = '\0';
     }
+    // otherwise copy dirname into buffer
+    // and make sure it ends with a /
     else
     {
       int dnl = strlen(dirname);
@@ -71,6 +86,7 @@ void print_dirent(struct dirent *de, char *dirname)
       path[dnl + a + strlen(de->d_name)] = '\0';
     }
 
+    // get stat and check for error
     struct stat s;
     if (stat(path, &s) == -1)
     {
@@ -90,13 +106,20 @@ void print_dirent(struct dirent *de, char *dirname)
   }
 }
 
+// opens dirent
+// checks for errors
+// loops through dirents
+// check for errors when reading dirents
+// calls print_dirent
 void print_dir(const char *dirname)
 {
   DIR *dir;
   struct dirent *de;
 
+  // open dirent and check if error occured
   if ((dir = opendir(dirname)) == NULL)
   {
+    // save error
     int errsv = errno;
     printf("myls: cannot open '%s': ", dirname);
     switch (errsv)
@@ -109,11 +132,14 @@ void print_dir(const char *dirname)
     return;
   }
 
+  // reset errno
   errno = 0;
+  // read dirent and check if error occured
   while ((de = readdir(dir)) != NULL)
   {
     if (errno != 0)
     {
+      // save error
       int errsv = errno;
       switch (errsv)
       {
@@ -124,6 +150,7 @@ void print_dir(const char *dirname)
       return;
     }
     else
+      // if no error occured print dir entry
       print_dirent(de, dirname);
     errno = 0;
   }
@@ -133,20 +160,25 @@ void print_dir(const char *dirname)
 
 int main(int argc, char *argv[])
 {
+  // parse arguments
   int opt;
   while ((opt = getopt(argc, argv, "la")) != -1)
   {
     switch (opt)
     {
+      // use long format
       case 'l': long_format = true; break;
+      // list all files
       case 'a': list_all = true; break;
+      // invalid argument
       default: usage(); exit(1);
     }
   }
-  struct stat s;
+  // print dirs given by args
   if (optind != argc)
     for (int i = optind; i < argc; i++)
       print_dir(argv[i]);
+  // else print curent dir
   else
     print_dir(".");
 }
