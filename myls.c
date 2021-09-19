@@ -28,12 +28,7 @@ void print_long_format(struct dirent *de, struct stat *s)
     // the function should print the following:
     // file type | permissions | number | owner | group | size | last modified | file name
     nlink_t links = s->st_nlink;
-    uid_t uid = s->st_uid;
-    gid_t gid = s->st_gid;
-    off_t size = s->st_size;
-    struct timespec last_access = s->st_ctim;
-    struct timespec last_modified = s->st_atim;
-    struct timespec last_status_change = s->st_mtim;
+    // check filetype of de
     char ftype;
     switch (s->st_mode & S_IFMT)
     {
@@ -45,13 +40,21 @@ void print_long_format(struct dirent *de, struct stat *s)
       case S_IFREG: ftype = '-'; break;
       case S_IFSOCK: ftype = 'g'; break;
     }
+    uid_t uid = s->st_uid;
+    gid_t gid = s->st_gid;
+    // size of file in bytes
+    off_t size = s->st_size;
+    struct timespec last_access = s->st_ctim;
+    struct timespec last_modified = s->st_atim;
+    struct timespec last_status_change = s->st_mtim;
+
     printf("%c %s\n", ftype, de->d_name);
 }
 
 // prints dirent depending on the value of list_all and long_format
 // if long_format is true reads the stat struct for that dirent
 // then calls long_format
-void print_dirent(struct dirent *de, char *dirname)
+void print_dirent(struct dirent *de, const char *dirname)
 {
   if (!list_all && de->d_name[0] == '.')
     return;
