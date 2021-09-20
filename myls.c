@@ -129,6 +129,7 @@ void print_dir(const char *dirname)
     {
       case EACCES: printf("cannot acccess file or directory"); break;
       case ENOENT: printf("no such file or directory"); break;
+      case ENOTDIR: printf("hmm"); break;
       default: printf("errno: %d", errsv); break;
     }
     printf("\n");
@@ -157,6 +158,8 @@ void print_dir(const char *dirname)
       print_dirent(de, dirname);
     errno = 0;
   }
+  
+  closedir(dir);
 
   printf("\n");
 }
