@@ -22,13 +22,14 @@ void usage()
 }
 
 // prints the dirent with long format
-void print_long_format(struct dirent *de, struct stat *s)
+void print_long_format(const char *fname, struct stat *s)
 {
     // function not complete yet
     // the function should print the following:
     // file type | permissions | number | owner | group | size | last modified | file name
     nlink_t links = s->st_nlink;
     // check filetype of de
+    // TODO: remove ftype placeholders
     char ftype;
     switch (s->st_mode & S_IFMT)
     {
@@ -40,6 +41,7 @@ void print_long_format(struct dirent *de, struct stat *s)
       case S_IFREG: ftype = '-'; break;
       case S_IFSOCK: ftype = 'g'; break;
     }
+
     uid_t uid = s->st_uid;
     gid_t gid = s->st_gid;
     // size of file in bytes
@@ -48,7 +50,7 @@ void print_long_format(struct dirent *de, struct stat *s)
     struct timespec last_modified = s->st_atim;
     struct timespec last_status_change = s->st_mtim;
 
-    printf("%c %s\n", ftype, de->d_name);
+    printf("%c %s\n", ftype, fname);
 }
 
 // prints dirent depending on the value of list_all and long_format
@@ -105,7 +107,7 @@ void print_dirent(struct dirent *de, const char *dirname)
       printf("\n");
       return;
     }
-    print_long_format(de, &s);
+    print_long_format(de->d_name, &s);
   }
 }
 
@@ -164,6 +166,32 @@ void print_dir(const char *dirname)
   printf("\n");
 }
 
+void print_arg(const char *filename)
+{
+  printf("%s: \n", filename);
+  struct stat s;
+  if (stat(filename, &s) == -1)
+  {
+    int errsv = errno;
+    printf("myls: error getting stats for %s: ", filename);
+    switch (errsv)
+    {
+      case EACCES: printf("access error"); break;
+      case EBADF: printf("badf"); break;
+      case EFAULT: printf("bad address"); break;
+      default: printf("%d", errsv);
+    }
+    printf("\n");
+    return;
+  }
+
+  switch (s.st_mode & S_IFMT)
+  {
+    case S_IFDIR: print_dir(filename); break;
+    default: print_long_format(filename, &s); break;
+  }
+}
+
 int main(int argc, char *argv[])
 {
   // parse arguments
@@ -183,8 +211,8 @@ int main(int argc, char *argv[])
   // print dirs given by args
   if (optind != argc)
     for (int i = optind; i < argc; i++)
-      print_dir(argv[i]);
+      print_arg(argv[i]);
   // else print curent dir
   else
-    print_dir(".");
+    print_arg(".");
 }
