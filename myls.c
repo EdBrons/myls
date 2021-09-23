@@ -37,20 +37,9 @@ void print_long_format(const char *fname, struct stat *s)
     // check filetype of de
     // TODO: remove ftype placeholders
     char ftype;
-    char *last_access;
-    char *last_modified;
-    char *last_status_change;
     off_t size;
-    
-    //intmax_t *file_size;
-    
-
-    //uintmax_t links;
-    //uintmax_t owner; 
-    //uintmax_t group;
-    //intmax_t size; 
-    //struct stat sb;
-    //sb = *s;
+   
+   
     switch (s -> st_mode & S_IFMT)
     {
       case S_IFBLK: ftype = 'a'; break;
@@ -61,26 +50,25 @@ void print_long_format(const char *fname, struct stat *s)
       case S_IFREG: ftype = '-'; break;
       case S_IFSOCK: ftype = 'g'; break;
     }
+    
+    
     uid_t uid = s -> st_uid;  /* User Id of owner */ 
     gid_t gid = s -> st_gid;  /* Group ID of owner */
-    // size of file in bytes
-    size = s -> st_size;
-    //ino_t ino = s -> st_ino;
-   // printf("I- node : %ju\n", (uintmax_t) s->st_ino); 
-    
-    
-    //struct timespec last_access = &s -> st_ctime; /* Time of last time access */
-    //struct timespec last_modified = &s -> st_atime; /* Time of last modification */
-    //struct timespec last_status_change = &s -> st_mtime; /* Time of last status change */
+    size = s -> st_size; /* size of file in bytes */
+    intmax_t file_size = (intmax_t) size; 
+    uintmax_t hard_link = (uintmax_t) s -> st_nlink; 
 
-    last_access = ctime(&s ->st_atime);
-    last_modified = ctime(&s ->st_mtime);
-    last_status_change = ctime(&s ->st_ctime);
+    char last_mod [13]; /* holds date and time */
+    char *fmt = "%b %R";  /* format of date and time  */
+    struct tm *local_time = localtime(&s ->st_ctim.tv_sec); /*convert to right format */
+    strftime ( last_mod, 13, fmt, local_time);
+     
+    struct passwd* user = getpwuid(uid);
+    struct passwd* group = getpwuid(gid);
+    char *name = user -> pw_name;
+    char *group_n =  group -> pw_name;
 
-    
-    
-    char p[11]; // hold permissions
-    
+    char p[11]; /*  hold all permissions */
     for(int i = 0; i < 10; i++){
     	p[i] = '-';
     }
@@ -114,14 +102,9 @@ void print_long_format(const char *fname, struct stat *s)
     }
     p[10] = '\0';
     
-    // print all permissions 
-
-    struct passwd* user = getpwuid(uid);
-    struct passwd* group = getpwuid(gid);
-    char *name = user -> pw_name;
-    char *group_n =  group -> pw_name;
     
-    printf("%s %ju %s %s %jd %s %s\n", p, (uintmax_t) s -> st_nlink,  name, group_n, (intmax_t) size, last_modified,fname);
+   printf("%s %ju %s %s %jd %s %s\n", p, hard_link, name, group_n,
+    file_size, last_mod,fname);
 }
 
 // prints dirent depending on the value of list_all and long_format
