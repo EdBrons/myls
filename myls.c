@@ -63,8 +63,20 @@ void print_long_format(const char *fname, struct stat *s)
     struct tm *local_time = localtime(&s ->st_ctim.tv_sec); /*convert to right format */
     strftime ( last_mod, 13, fmt, local_time);
      
-    struct passwd* user = getpwuid(uid);
-    struct passwd* group = getpwuid(gid);
+    struct passwd* user;
+    if ((user = getpwuid(uid)) == NULL)
+    {
+      perror("getpwuid");
+      return;
+    }
+
+    struct passwd* group;
+    if ((group = getpwuid(gid)) == NULL)
+    {
+      perror("getpwuid");
+      return ;
+    }
+
     char *name = user -> pw_name;
     char *group_n =  group -> pw_name;
 
