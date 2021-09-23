@@ -6,7 +6,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sysmacros.h>
 #include <unistd.h>
+#include <stdint.h>
+#include <time.h>
+#include <stdio.h>
+#include <pwd.h>
+
 
 // base buffer sized used in program
 #define BUFFERSIZE 80
@@ -27,10 +33,24 @@ void print_long_format(struct dirent *de, struct stat *s)
     // function not complete yet
     // the function should print the following:
     // file type | permissions | number | owner | group | size | last modified | file name
-    nlink_t links = s->st_nlink;
+    //nlink_t links = s->st_nlink; /*Number of hard links to file */
     // check filetype of de
     char ftype;
-    switch (s->st_mode & S_IFMT)
+    char *last_access;
+    char *last_modified;
+    char *last_status_change;
+    off_t size;
+    
+    //intmax_t *file_size;
+    
+
+    //uintmax_t links;
+    //uintmax_t owner; 
+    //uintmax_t group;
+    //intmax_t size; 
+    //struct stat sb;
+    //sb = *s;
+    switch (s -> st_mode & S_IFMT)
     {
       case S_IFBLK: ftype = 'a'; break;
       case S_IFCHR: ftype = 'b'; break;
@@ -40,15 +60,86 @@ void print_long_format(struct dirent *de, struct stat *s)
       case S_IFREG: ftype = '-'; break;
       case S_IFSOCK: ftype = 'g'; break;
     }
-    uid_t uid = s->st_uid;
-    gid_t gid = s->st_gid;
+    uid_t uid = s -> st_uid;  /* User Id of owner */ 
+    gid_t gid = s -> st_gid;  /* Group ID of owner */
     // size of file in bytes
-    off_t size = s->st_size;
-    struct timespec last_access = s->st_ctim;
-    struct timespec last_modified = s->st_atim;
-    struct timespec last_status_change = s->st_mtim;
+    size = s -> st_size;
+    //ino_t ino = s -> st_ino;
+   // printf("I- node : %ju\n", (uintmax_t) s->st_ino); 
+    
+    
+    //struct timespec last_access = &s -> st_ctime; /* Time of last time access */
+    //struct timespec last_modified = &s -> st_atime; /* Time of last modification */
+    //struct timespec last_status_change = &s -> st_mtime; /* Time of last status change */
 
-    printf("%c %s\n", ftype, de->d_name);
+    last_access = ctime(&s ->st_atime);
+    last_modified = ctime(&s ->st_mtime);
+    last_status_change = ctime(&s ->st_ctime);
+
+    
+    
+    char p[10]; // hold permissions
+    
+    for(int i = 0; i < 10; i++){
+    	p[i] = '-';
+    }
+    p[0] = ftype;
+    if (S_IRUSR & s-> st_mode) {
+    	p[1] = 'r';
+    }
+    if (S_IWUSR & s-> st_mode) {
+    	p[2] = 'w';
+    }
+    if (S_IXUSR & s-> st_mode) {
+    	p[3] = 'x';
+    }
+    if (S_IRGRP & s-> st_mode) {
+    	p[4] = 'r';
+    }
+    if (S_IWGRP & s-> st_mode) {
+    	p[5] = 'w';
+    }
+    if (S_IXGRP & s-> st_mode) {
+    	p[6] = 'x';
+    }
+    if (S_IROTH & s-> st_mode) {
+    	p[7] = 'r';
+    }
+    if (S_IWOTH & s-> st_mode) {
+    	p[8] = 'w';
+    }
+    if (S_IXOTH & s-> st_mode) {
+    	p[9] = 'x';
+    }
+    
+    // print all permissions 
+
+    struct passwd* user = getpwuid(uid);
+    struct passwd* group = getpwuid(gid);
+    char *name = user -> pw_name;
+    char *group_n =  group -> pw_name;
+    
+    printf("%s %ju %s %s %jd %s %s\n",p, (uintmax_t) s -> st_nlink,  name, group_n, (intmax_t) size, last_modified,de->d_name);
+    
+    //printf("%c %s\n", ftype, de->d_name);
+    
+    
+    
+    
+    
+    //printf("Ownership Try:   UID=%ju\n", (unsigned char) s -> st_uid);
+    //printf("%c %s\n", ftype, de->d_name);
+    //printf("Link count:    %ju\n", (uintmax_t) s -> st_nlink);
+    //printf("Ownership:   UID=%ju GID=%ju\n", (uintmax_t) uid, (uintmax_t) gid);
+     //printf("File size:  %jd bytes\n", (intmax_t) size); 
+    //printf("Last status change:  %s", last_status_change);
+    //printf("Last file access:    %s", last_access);
+    //printf("Last file modification: %s", last_modified);
+
+ 
+    //exit(EXIT_SUCCESS);
+    
+    
 }
 
 // prints dirent depending on the value of list_all and long_format
