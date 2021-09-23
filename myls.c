@@ -79,7 +79,7 @@ void print_long_format(const char *fname, struct stat *s)
 
     
     
-    char p[10]; // hold permissions
+    char p[11]; // hold permissions
     
     for(int i = 0; i < 10; i++){
     	p[i] = '-';
@@ -112,6 +112,7 @@ void print_long_format(const char *fname, struct stat *s)
     if (S_IXOTH & s-> st_mode) {
     	p[9] = 'x';
     }
+    p[10] = '\0';
     
     // print all permissions 
 
@@ -120,24 +121,7 @@ void print_long_format(const char *fname, struct stat *s)
     char *name = user -> pw_name;
     char *group_n =  group -> pw_name;
     
-    printf("%s %ju %s %s %jd %s %s\n",p, (uintmax_t) s -> st_nlink,  name, group_n, (intmax_t) size, last_modified,de->d_name);
-    
-    //printf("%c %s\n", ftype, de->d_name);
-    
-    
-    
-    
-    
-    //printf("Ownership Try:   UID=%ju\n", (unsigned char) s -> st_uid);
-    //printf("%c %s\n", ftype, de->d_name);
-    //printf("Link count:    %ju\n", (uintmax_t) s -> st_nlink);
-    //printf("Ownership:   UID=%ju GID=%ju\n", (uintmax_t) uid, (uintmax_t) gid);
-     //printf("File size:  %jd bytes\n", (intmax_t) size); 
-    //printf("Last status change:  %s", last_status_change);
-    //printf("Last file access:    %s", last_access);
-    //printf("Last file modification: %s", last_modified);
- 
-    //exit(EXIT_SUCCESS);
+    printf("%s %ju %s %s %jd %s %s\n", p, (uintmax_t) s -> st_nlink,  name, group_n, (intmax_t) size, last_modified,fname);
 }
 
 // prints dirent depending on the value of list_all and long_format
