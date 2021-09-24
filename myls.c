@@ -22,6 +22,7 @@
 // globals used for formatting
 int list_all = false;
 bool long_format = false;
+bool multiple = false;
 
 // describes usage of program for user
 void usage()
@@ -117,19 +118,23 @@ void print_long_format(const char *fname, struct stat *s)
     p[10] = '\0';
     
     
-   printf("%s %ju %s %s %jd %s %s\n", p, hard_link, name, group_n,
+   printf("%s %ju %s %s %jd %s %s", p, hard_link, name, group_n,
     file_size, last_mod,fname);
 }
 
 // prints dirent depending on the value of list_all and long_format
 // if long_format is true reads the stat struct for that dirent
 // then calls long_format
-void print_dirent(struct dirent *de, const char *dirname)
+// returns true if it printed
+bool print_dirent(struct dirent *de, const char *dirname)
 {
   if (!list_all && de->d_name[0] == '.')
-    return;
+    return false;
   if (!long_format)
+  {
     printf("%s ", de->d_name);
+    return false;
+  }
   else
   {
     // redo how the path is constructed sometime
@@ -163,19 +168,11 @@ void print_dirent(struct dirent *de, const char *dirname)
     struct stat s;
     if (stat(path, &s) == -1)
     {
-      int errsv = errno;
-      printf("myls: error getting stats for %s: ", path);
-      switch (errsv)
-      {
-        case EACCES: printf("access error"); break;
-        case EBADF: printf("badf"); break;
-        case EFAULT: printf("bad address"); break;
-        default: printf("%d", errsv);
-      }
-      printf("\n");
-      return;
+      perror(path);
+      return false;
     }
     print_long_format(de->d_name, &s);
+    return true;
   }
 }
 
@@ -192,20 +189,11 @@ void print_dir(const char *dirname)
   // open dirent and check if error occured
   if ((dir = opendir(dirname)) == NULL)
   {
-    // save error
-    int errsv = errno;
-    printf("myls: cannot open '%s': ", dirname);
-    switch (errsv)
-    {
-      case EACCES: printf("cannot acccess file or directory"); break;
-      case ENOENT: printf("no such file or directory"); break;
-      case ENOTDIR: printf("hmm"); break;
-      default: printf("errno: %d", errsv); break;
-    }
-    printf("\n");
+    perror(dirname);
     return;
   }
 
+  bool flag = false;
   // reset errno
   errno = 0;
   // read dirent and check if error occured
@@ -213,43 +201,30 @@ void print_dir(const char *dirname)
   {
     if (errno != 0)
     {
-      // save error
-      int errsv = errno;
-      switch (errsv)
-      {
-        case EBADF: printf("myls: cannot access dir entry: invalid directory stream"); break;
-        default: printf("errno: %d", errsv);
-      }
-      printf("\n");
+      perror(dirname);
       return;
     }
     else
+    {
       // if no error occured print dir entry
-      print_dirent(de, dirname);
+      if (flag) printf("\n");
+      bool t = print_dirent(de, dirname) && long_format;
+      flag = t;
+    }
     errno = 0;
   }
   
   closedir(dir);
-
-  printf("\n");
 }
 
 void print_arg(const char *filename)
 {
-  printf("%s: \n", filename);
+  if (multiple)
+    printf("%s: \n", filename);
   struct stat s;
   if (stat(filename, &s) == -1)
   {
-    int errsv = errno;
-    printf("myls: error getting stats for %s: ", filename);
-    switch (errsv)
-    {
-      case EACCES: printf("access error"); break;
-      case EBADF: printf("badf"); break;
-      case EFAULT: printf("bad address"); break;
-      default: printf("%d", errsv);
-    }
-    printf("\n");
+    perror(filename);
     return;
   }
 
@@ -278,8 +253,14 @@ int main(int argc, char *argv[])
   }
   // print dirs given by args
   if (optind != argc)
+  {
+    multiple = true;
     for (int i = optind; i < argc; i++)
+    {
       print_arg(argv[i]);
+      printf("\n");
+    }
+  }
   // else print curent dir
   else
     print_arg(".");
