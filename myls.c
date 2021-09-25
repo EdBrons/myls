@@ -33,27 +33,19 @@ void usage()
 // prints the dirent with long format
 void print_long_format(const char *fname, struct stat *s)
 {
-    // function not complete yet
-    // the function should print the following:
-    // file type | permissions | number | owner | group | size | last modified | file name
-    //nlink_t links = s->st_nlink; /*Number of hard links to file */
-    // check filetype of de
-    // TODO: remove ftype placeholders
     char ftype;
     off_t size;
    
-   
     switch (s -> st_mode & S_IFMT)
     {
-      case S_IFBLK: ftype = 'a'; break;
-      case S_IFCHR: ftype = 'b'; break;
+      case S_IFBLK: ftype = 'b'; break;
+      case S_IFCHR: ftype = 'c'; break;
       case S_IFDIR: ftype = 'd'; break;
-      case S_IFIFO: ftype = 'c'; break;
-      case S_IFLNK: ftype = 'e'; break;
+      case S_IFIFO: ftype = 'f'; break;
+      case S_IFLNK: ftype = 'l'; break;
       case S_IFREG: ftype = '-'; break;
-      case S_IFSOCK: ftype = 'g'; break;
+      case S_IFSOCK: ftype = 's'; break;
     }
-    
     
     uid_t uid = s -> st_uid;  /* User Id of owner */ 
     gid_t gid = s -> st_gid;  /* Group ID of owner */
