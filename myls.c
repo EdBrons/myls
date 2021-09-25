@@ -118,7 +118,7 @@ void print_long_format(const char *fname, struct stat *s)
     p[10] = '\0';
     
     
-   printf("%s %ju %s %s %jd %s %s", p, hard_link, name, group_n,
+   printf("%s %ju %s %s %jd %s %s\n", p, hard_link, name, group_n,
     file_size, last_mod,fname);
 }
 
@@ -193,7 +193,6 @@ void print_dir(const char *dirname)
     return;
   }
 
-  bool flag = false;
   // reset errno
   errno = 0;
   // read dirent and check if error occured
@@ -207,9 +206,7 @@ void print_dir(const char *dirname)
     else
     {
       // if no error occured print dir entry
-      if (flag) printf("\n");
-      bool t = print_dirent(de, dirname) && long_format;
-      flag = t;
+      print_dirent(de, dirname);
     }
     errno = 0;
   }
@@ -263,5 +260,8 @@ int main(int argc, char *argv[])
   }
   // else print curent dir
   else
+  {
     print_arg(".");
+    printf("\n");
+  }
 }
