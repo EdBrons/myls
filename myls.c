@@ -23,6 +23,7 @@
 int list_all = false;
 bool long_format = false;
 bool multiple = false;
+bool printed_prev = false;
 
 // describes usage of program for user
 void usage()
@@ -33,6 +34,9 @@ void usage()
 // prints the dirent with long format
 void print_long_format(const char *fname, struct stat *s)
 {
+    if (printed_prev)
+      printf("\n");
+
     char ftype;
     off_t size;
    
@@ -110,8 +114,9 @@ void print_long_format(const char *fname, struct stat *s)
     p[10] = '\0';
     
     
-   printf("%s %ju %s %s %jd %s %s\n", p, hard_link, name, group_n,
+   printf("%s %ju %s %s %jd %s %s", p, hard_link, name, group_n,
     file_size, last_mod,fname);
+   printed_prev = true;
 }
 
 // prints dirent depending on the value of list_all and long_format
@@ -177,6 +182,7 @@ void print_dir(const char *dirname)
 {
   DIR *dir;
   struct dirent *de;
+  printed_prev = false;
 
   // open dirent and check if error occured
   if ((dir = opendir(dirname)) == NULL)
@@ -243,7 +249,7 @@ int main(int argc, char *argv[])
   // print dirs given by args
   if (optind != argc)
   {
-    multiple = true;
+    if (argc - optind > 0) multiple = true;
     for (int i = optind; i < argc; i++)
     {
       print_arg(argv[i]);
