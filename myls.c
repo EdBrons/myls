@@ -134,7 +134,6 @@ bool print_dirent(struct dirent *de, const char *dirname)
   }
   else
   {
-    // redo how the path is constructed sometime
     // this section of code creates a buffer filled with:
     // "dirname/de->d_name\0" to be passed to stat
     // buffer to hold path string
