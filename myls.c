@@ -22,7 +22,7 @@
 // globals used for formatting
 int list_all = false;
 bool long_format = false;
-bool multiple = false;
+bool print_singular = true;
 bool printed_prev = false;
 
 // describes usage of program for user
@@ -34,89 +34,63 @@ void usage()
 // prints the dirent with long format
 void print_long_format(const char *fname, struct stat *s)
 {
-    if (printed_prev)
-      printf("\n");
+  if (printed_prev)
+    printf("\n");
+  char ftype;
+  off_t size;
+  switch (s -> st_mode & S_IFMT)
+  {
+    case S_IFBLK: ftype = 'b'; break;
+    case S_IFCHR: ftype = 'c'; break;
+    case S_IFDIR: ftype = 'd'; break;
+    case S_IFIFO: ftype = 'f'; break;
+    case S_IFLNK: ftype = 'l'; break;
+    case S_IFREG: ftype = '-'; break;
+    case S_IFSOCK: ftype = 's'; break;
+  }
+  uid_t uid = s -> st_uid;  /* User Id of owner */ 
+  gid_t gid = s -> st_gid;  /* Group ID of owner */
+  size = s -> st_size; /* size of file in bytes */
+  intmax_t file_size = (intmax_t) size; 
+  uintmax_t hard_link = (uintmax_t) s -> st_nlink; 
+  char last_mod [DATESTRBUFSIZE]; /* holds date and time */
+  char *fmt = "%b %R";  /* format of date and time  */
+  struct tm *local_time = localtime(&s ->st_ctim.tv_sec); /*convert to right format */
+  strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
+  struct passwd* user;
+  if ((user = getpwuid(uid)) == NULL)
+  {
+    int errsv = errno;
+    fprintf(stderr, "myls: %d", errsv);
+    return;
+  }
+  struct passwd* group;
+  if ((group = getpwuid(gid)) == NULL)
+  {
+    int errsv = errno;
+    fprintf(stderr, "myls: %d", errsv);
+    return;
+  }
 
-    char ftype;
-    off_t size;
-   
-    switch (s -> st_mode & S_IFMT)
-    {
-      case S_IFBLK: ftype = 'b'; break;
-      case S_IFCHR: ftype = 'c'; break;
-      case S_IFDIR: ftype = 'd'; break;
-      case S_IFIFO: ftype = 'f'; break;
-      case S_IFLNK: ftype = 'l'; break;
-      case S_IFREG: ftype = '-'; break;
-      case S_IFSOCK: ftype = 's'; break;
-    }
-    
-    uid_t uid = s -> st_uid;  /* User Id of owner */ 
-    gid_t gid = s -> st_gid;  /* Group ID of owner */
-    size = s -> st_size; /* size of file in bytes */
-    intmax_t file_size = (intmax_t) size; 
-    uintmax_t hard_link = (uintmax_t) s -> st_nlink; 
+  char *name = user->pw_name;
+  char *group_n = group->pw_name;
 
-    char last_mod [DATESTRBUFSIZE]; /* holds date and time */
-    char *fmt = "%b %R";  /* format of date and time  */
-    struct tm *local_time = localtime(&s ->st_ctim.tv_sec); /*convert to right format */
-    strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
-     
-    struct passwd* user;
-    if ((user = getpwuid(uid)) == NULL)
-    {
-      perror("getpwuid");
-      return;
-    }
-
-    struct passwd* group;
-    if ((group = getpwuid(gid)) == NULL)
-    {
-      perror("getpwuid");
-      return ;
-    }
-
-    char *name = user -> pw_name;
-    char *group_n =  group -> pw_name;
-
-    char p[11]; /*  hold all permissions */
-    for(int i = 0; i < 10; i++){
-    	p[i] = '-';
-    }
-    p[0] = ftype;
-    if (S_IRUSR & s-> st_mode) {
-    	p[1] = 'r';
-    }
-    if (S_IWUSR & s-> st_mode) {
-    	p[2] = 'w';
-    }
-    if (S_IXUSR & s-> st_mode) {
-    	p[3] = 'x';
-    }
-    if (S_IRGRP & s-> st_mode) {
-    	p[4] = 'r';
-    }
-    if (S_IWGRP & s-> st_mode) {
-    	p[5] = 'w';
-    }
-    if (S_IXGRP & s-> st_mode) {
-    	p[6] = 'x';
-    }
-    if (S_IROTH & s-> st_mode) {
-    	p[7] = 'r';
-    }
-    if (S_IWOTH & s-> st_mode) {
-    	p[8] = 'w';
-    }
-    if (S_IXOTH & s-> st_mode) {
-    	p[9] = 'x';
-    }
-    p[10] = '\0';
-    
-    
-   printf("%s %ju %s %s %jd %s %s", p, hard_link, name, group_n,
-    file_size, last_mod,fname);
-   printed_prev = true;
+  char p[11]; /*  hold all permissions */
+  p[0] = ftype;
+  p[1] = S_IRUSR & s->st_mode ? 'r' : '-';
+  p[2] = S_IWUSR & s->st_mode ? 'w' : '-';
+  p[3] = S_IXUSR & s->st_mode ? 'x' : '-';
+  p[4] = S_IRGRP & s->st_mode ? 'r' : '-';
+  p[5] = S_IWGRP & s->st_mode ? 'w' : '-';
+  p[6] = S_IXGRP & s->st_mode ? 'x' : '-';
+  p[7] = S_IROTH & s->st_mode ? 'r' : '-';
+  p[8] = S_IWOTH & s->st_mode ? 'w' : '-';
+  p[9] = S_IXOTH & s->st_mode ? 'x' : '-';
+  p[10] = '\0';
+  
+ printf("%s %ju %s %s %jd %s %s", 
+     p, hard_link, name, group_n, file_size, last_mod,fname);
+ printed_prev = true;
 }
 
 // prints dirent depending on the value of list_all and long_format
@@ -213,7 +187,7 @@ void print_dir(const char *dirname)
 
 void print_arg(const char *filename)
 {
-  if (multiple)
+  if (!print_singular)
     printf("%s: \n", filename);
   struct stat s;
   if (stat(filename, &s) == -1)
@@ -237,9 +211,7 @@ int main(int argc, char *argv[])
   {
     switch (opt)
     {
-      // use long format
       case 'l': long_format = true; break;
-      // list all files
       case 'a': list_all = true; break;
       // invalid argument
       default: usage(); exit(1);
@@ -248,7 +220,7 @@ int main(int argc, char *argv[])
   // print dirs given by args
   if (optind != argc)
   {
-    if (argc - optind > 0) multiple = true;
+    if (argc - optind > 0) print_singular = false;
     for (int i = optind; i < argc; i++)
     {
       print_arg(argv[i]);
