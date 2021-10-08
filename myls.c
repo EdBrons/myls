@@ -12,6 +12,7 @@
 #include <time.h>
 #include <stdio.h>
 #include <pwd.h>
+#include <grp.h>
 
 
 // base buffer sized used in program
@@ -57,23 +58,33 @@ void print_long_format(const char *fname, struct stat *s)
   char *fmt = "%b %R";  /* format of date and time  */
   struct tm *local_time = localtime(&s->st_ctim.tv_sec); /*convert to right format */
   strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
+
   struct passwd* user;
+
+  char *name;
+  char *group_n;
+
+  char name_buffer[10];
+  char group_name_n_buffer[10];
+
   if ((user = getpwuid(uid)) == NULL)
   {
-    int errsv = errno;
-    fprintf(stderr, "myls: %d", errsv);
-    return;
+    sprintf(name_buffer, "%d", uid);
   }
-  struct passwd* group;
-  if ((group = getpwuid(gid)) == NULL)
+  else
   {
-    int errsv = errno;
-    fprintf(stderr, "myls: %d", errsv);
-    return;
+    name = user->pw_name;
   }
 
-  char *name = user->pw_name;
-  char *group_n = group->pw_name;
+  struct group* group;
+  if ((group = getgrgid(gid)) == NULL)
+  {
+    sprintf(group_name_n_buffer, "%d", gid);
+  }
+  else
+  {
+    group_n = group->gr_name;
+  }
 
   char p[11]; /*  hold all permissions */
   p[0] = ftype;
