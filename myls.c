@@ -37,18 +37,7 @@ void print_long_format(const char *fname, struct stat *s)
 {
   if (printed_prev)
     printf("\n");
-  char ftype;
   off_t size;
-  switch (s->st_mode & S_IFMT)
-  {
-    case S_IFBLK: ftype = 'b'; break;
-    case S_IFCHR: ftype = 'c'; break;
-    case S_IFDIR: ftype = 'd'; break;
-    case S_IFIFO: ftype = 'f'; break;
-    case S_IFLNK: ftype = 'l'; break;
-    case S_IFREG: ftype = '-'; break;
-    case S_IFSOCK: ftype = 's'; break;
-  }
   uid_t uid = s->st_uid;  /* User Id of owner */ 
   gid_t gid = s->st_gid;  /* Group ID of owner */
   size = s->st_size; /* size of file in bytes */
@@ -86,21 +75,31 @@ void print_long_format(const char *fname, struct stat *s)
     group_n = group->gr_name;
   }
 
-  char p[11]; /*  hold all permissions */
-  p[0] = ftype;
-  p[1] = S_IRUSR & s->st_mode ? 'r' : '-';
-  p[2] = S_IWUSR & s->st_mode ? 'w' : '-';
-  p[3] = S_IXUSR & s->st_mode ? 'x' : '-';
-  p[4] = S_IRGRP & s->st_mode ? 'r' : '-';
-  p[5] = S_IWGRP & s->st_mode ? 'w' : '-';
-  p[6] = S_IXGRP & s->st_mode ? 'x' : '-';
-  p[7] = S_IROTH & s->st_mode ? 'r' : '-';
-  p[8] = S_IWOTH & s->st_mode ? 'w' : '-';
-  p[9] = S_IXOTH & s->st_mode ? 'x' : '-';
-  p[10] = '\0';
+  char ftype;
+  switch (s->st_mode & S_IFMT)
+  {
+    case S_IFBLK: ftype = 'b'; break;
+    case S_IFCHR: ftype = 'c'; break;
+    case S_IFDIR: ftype = 'd'; break;
+    case S_IFIFO: ftype = 'f'; break;
+    case S_IFLNK: ftype = 'l'; break;
+    case S_IFREG: ftype = '-'; break;
+    case S_IFSOCK: ftype = 's'; break;
+  }
+  char p[10]; /*  hold all permissions */
+  p[0] = S_IRUSR & s->st_mode ? 'r' : '-';
+  p[1] = S_IWUSR & s->st_mode ? 'w' : '-';
+  p[2] = S_IXUSR & s->st_mode ? 'x' : '-';
+  p[3] = S_IRGRP & s->st_mode ? 'r' : '-';
+  p[4] = S_IWGRP & s->st_mode ? 'w' : '-';
+  p[5] = S_IXGRP & s->st_mode ? 'x' : '-';
+  p[6] = S_IROTH & s->st_mode ? 'r' : '-';
+  p[7] = S_IWOTH & s->st_mode ? 'w' : '-';
+  p[8] = S_IXOTH & s->st_mode ? 'x' : '-';
+  p[9] = '\0';
   
- printf("%s %ju %s %s %jd %s %s", 
-     p, hard_link, name, group_n, file_size, last_mod,fname);
+ printf("%c%s %ju %s %s %jd %s %s", 
+     ftype, p, hard_link, name, group_n, file_size, last_mod,fname);
  printed_prev = true;
 }
 
