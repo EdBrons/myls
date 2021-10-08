@@ -38,7 +38,7 @@ void print_long_format(const char *fname, struct stat *s)
     printf("\n");
   char ftype;
   off_t size;
-  switch (s -> st_mode & S_IFMT)
+  switch (s->st_mode & S_IFMT)
   {
     case S_IFBLK: ftype = 'b'; break;
     case S_IFCHR: ftype = 'c'; break;
@@ -48,14 +48,14 @@ void print_long_format(const char *fname, struct stat *s)
     case S_IFREG: ftype = '-'; break;
     case S_IFSOCK: ftype = 's'; break;
   }
-  uid_t uid = s -> st_uid;  /* User Id of owner */ 
-  gid_t gid = s -> st_gid;  /* Group ID of owner */
-  size = s -> st_size; /* size of file in bytes */
+  uid_t uid = s->st_uid;  /* User Id of owner */ 
+  gid_t gid = s->st_gid;  /* Group ID of owner */
+  size = s->st_size; /* size of file in bytes */
   intmax_t file_size = (intmax_t) size; 
-  uintmax_t hard_link = (uintmax_t) s -> st_nlink; 
+  uintmax_t hard_link = (uintmax_t) s->st_nlink; 
   char last_mod [DATESTRBUFSIZE]; /* holds date and time */
   char *fmt = "%b %R";  /* format of date and time  */
-  struct tm *local_time = localtime(&s ->st_ctim.tv_sec); /*convert to right format */
+  struct tm *local_time = localtime(&s->st_ctim.tv_sec); /*convert to right format */
   strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
   struct passwd* user;
   if ((user = getpwuid(uid)) == NULL)
@@ -187,8 +187,6 @@ void print_dir(const char *dirname)
 
 void print_arg(const char *filename)
 {
-  if (!print_singular)
-    printf("%s: \n", filename);
   struct stat s;
   if (stat(filename, &s) == -1)
   {
@@ -196,10 +194,18 @@ void print_arg(const char *filename)
     return;
   }
 
+  if (!print_singular && (s.st_mode & S_IFDIR))
+    printf("%s: \n", filename);
+
   switch (s.st_mode & S_IFMT)
   {
     case S_IFDIR: print_dir(filename); break;
-    default: print_long_format(filename, &s); break;
+    default: 
+      if (long_format)
+        print_long_format(filename, &s); 
+      else
+        printf("%s", filename);
+      break;
   }
 }
 
