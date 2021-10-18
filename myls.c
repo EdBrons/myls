@@ -14,7 +14,6 @@
 #include <pwd.h>
 #include <grp.h>
 
-
 // base buffer sized used in program
 #define BUFFERSIZE 80
 
@@ -27,16 +26,15 @@ bool print_singular = true;
 bool printed_prev = false;
 
 // describes usage of program for user
-void usage()
-{
+void usage(){
   fprintf(stderr, "Usage: ./myls [-l] [-a] [files...]\n");
-}
+  }
 
 // prints the dirent with long format
-void print_long_format(const char *fname, struct stat *s)
-{
-  if (printed_prev)
+void print_long_format(const char *fname, struct stat *s){
+  if (printed_prev){
     printf("\n");
+  }
   off_t size;
   uid_t uid = s->st_uid;  /* User Id of owner */ 
   gid_t gid = s->st_gid;  /* Group ID of owner */
@@ -47,7 +45,6 @@ void print_long_format(const char *fname, struct stat *s)
   char *fmt = "%b %R";  /* format of date and time  */
   struct tm *local_time = localtime(&s->st_ctim.tv_sec); /*convert to right format */
   strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
-
   struct passwd* user;
 
   char *name;
@@ -56,28 +53,23 @@ void print_long_format(const char *fname, struct stat *s)
   char name_buffer[10];
   char group_name_n_buffer[10];
 
-  if ((user = getpwuid(uid)) == NULL)
-  {
+  if ((user = getpwuid(uid)) == NULL){
     sprintf(name_buffer, "%d", uid);
   }
-  else
-  {
+  else{
     name = user->pw_name;
   }
 
   struct group* group;
-  if ((group = getgrgid(gid)) == NULL)
-  {
+  if ((group = getgrgid(gid)) == NULL){
     sprintf(group_name_n_buffer, "%d", gid);
   }
-  else
-  {
+  else{
     group_n = group->gr_name;
   }
 
   char ftype;
-  switch (s->st_mode & S_IFMT)
-  {
+  switch (s->st_mode & S_IFMT){
     case S_IFBLK: ftype = 'b'; break;
     case S_IFCHR: ftype = 'c'; break;
     case S_IFDIR: ftype = 'd'; break;
@@ -107,36 +99,31 @@ void print_long_format(const char *fname, struct stat *s)
 // if long_format is true reads the stat struct for that dirent
 // then calls long_format
 // returns true if it printed
-bool print_dirent(struct dirent *de, const char *dirname)
-{
-  if (!list_all && de->d_name[0] == '.')
+bool print_dirent(struct dirent *de, const char *dirname){
+  if (!list_all && de->d_name[0] == '.'){
     return false;
-  if (!long_format)
-  {
+  }
+  if (!long_format){
     printf("%s ", de->d_name);
     return false;
   }
-  else
-  {
+  else{
     // this section of code creates a buffer filled with:
     // "dirname/de->d_name\0" to be passed to stat
     // buffer to hold path string
     char path[BUFFERSIZE];
     // this if statement here handles the case of when dirname is /
-    if (strcmp(dirname, "/") == 0)
-    {
+    if (strcmp(dirname, "/") == 0){
       path[0] = '/';
       path[1] = '\0';
     }
     // otherwise copy dirname into buffer
     // and make sure it ends with a /
-    else
-    {
+    else{
       int dnl = strlen(dirname);
       int a = 0;
       strncpy(path, dirname, dnl);
-      if (dirname[dnl-1] != '/')
-      {
+      if (dirname[dnl-1] != '/'){
         path[dnl] = '/';
         a = 1;
       }
@@ -146,8 +133,7 @@ bool print_dirent(struct dirent *de, const char *dirname)
 
     // get stat and check for error
     struct stat s;
-    if (stat(path, &s) == -1)
-    {
+    if (stat(path, &s) == -1){
       perror(path);
       return false;
     }
@@ -161,15 +147,13 @@ bool print_dirent(struct dirent *de, const char *dirname)
 // loops through dirents
 // check for errors when reading dirents
 // calls print_dirent
-void print_dir(const char *dirname)
-{
+void print_dir(const char *dirname){
   DIR *dir;
   struct dirent *de;
   printed_prev = false;
 
   // open dirent and check if error occured
-  if ((dir = opendir(dirname)) == NULL)
-  {
+  if ((dir = opendir(dirname)) == NULL){
     perror(dirname);
     return;
   }
@@ -177,15 +161,12 @@ void print_dir(const char *dirname)
   // reset errno
   errno = 0;
   // read dirent and check if error occured
-  while ((de = readdir(dir)) != NULL)
-  {
-    if (errno != 0)
-    {
+  while ((de = readdir(dir)) != NULL){
+    if (errno != 0){
       perror(dirname);
       return;
     }
-    else
-    {
+    else{
       // if no error occured print dir entry
       print_dirent(de, dirname);
     }
@@ -195,38 +176,35 @@ void print_dir(const char *dirname)
   closedir(dir);
 }
 
-void print_arg(const char *filename)
-{
+void print_arg(const char *filename){
   struct stat s;
-  if (stat(filename, &s) == -1)
-  {
+  if (stat(filename, &s) == -1){
     perror(filename);
     return;
   }
 
-  if (!print_singular && (s.st_mode & S_IFDIR))
+  if (!print_singular && (s.st_mode & S_IFDIR)){
     printf("%s: \n", filename);
+  }
 
-  switch (s.st_mode & S_IFMT)
-  {
+  switch (s.st_mode & S_IFMT){
     case S_IFDIR: print_dir(filename); break;
     default: 
-      if (long_format)
-        print_long_format(filename, &s); 
-      else
+      if (long_format){
+        print_long_format(filename, &s);
+      }
+      else{
         printf("%s", filename);
+      }
       break;
   }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){
   // parse arguments
   int opt;
-  while ((opt = getopt(argc, argv, "la")) != -1)
-  {
-    switch (opt)
-    {
+  while ((opt = getopt(argc, argv, "la")) != -1){
+    switch (opt){
       case 'l': long_format = true; break;
       case 'a': list_all = true; break;
       // invalid argument
@@ -234,18 +212,17 @@ int main(int argc, char *argv[])
     }
   }
   // print dirs given by args
-  if (optind != argc)
-  {
-    if (argc - optind > 0) print_singular = false;
-    for (int i = optind; i < argc; i++)
-    {
+  if (optind != argc){
+    if (argc - optind > 0){
+      print_singular = false;
+      }
+    for (int i = optind; i < argc; i++){
       print_arg(argv[i]);
       printf("\n");
     }
   }
   // else print curent dir
-  else
-  {
+  else{
     print_arg(".");
     printf("\n");
   }
