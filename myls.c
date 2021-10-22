@@ -42,7 +42,7 @@ void print_long_format(const char *fname, struct stat *s){
     intmax_t file_size = (intmax_t) size; 
     uintmax_t hard_link = (uintmax_t) s->st_nlink; 
     char last_mod [DATESTRBUFSIZE]; /* holds date and time */
-    char *fmt = "%b %d";  /* format of date and time  */
+    char *fmt = "%b %d %R";  /* format of date and time  */
     struct tm *local_time = localtime(&s->st_ctim.tv_sec); /*convert to right format */
     strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
     struct passwd* user;
