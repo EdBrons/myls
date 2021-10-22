@@ -97,7 +97,6 @@ void print_long_format(const char *fname, struct stat *s){
 // prints dirent depending on the value of list_all and long_format
 // if long_format is true reads the stat struct for that dirent
 // then calls long_format
-// returns true if it printed
 bool print_dirent(struct dirent *de, const char *dirname){
   if (!list_all && de->d_name[0] == '.'){
     return false;
