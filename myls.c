@@ -28,7 +28,7 @@ bool printed_prev = false;
 // describes usage of program for user
 void usage(){
   fprintf(stderr, "Usage: ./myls [-l] [-a] [files...]\n");
-  }
+}
 
 // prints the dirent with long format
 void print_long_format(const char *fname, struct stat *s){
@@ -42,7 +42,7 @@ void print_long_format(const char *fname, struct stat *s){
   intmax_t file_size = (intmax_t) size; 
   uintmax_t hard_link = (uintmax_t) s->st_nlink; 
   char last_mod [DATESTRBUFSIZE]; /* holds date and time */
-  char *fmt = "%b %R";  /* format of date and time  */
+  char *fmt = "%b %d";  /* format of date and time  */
   struct tm *local_time = localtime(&s->st_ctim.tv_sec); /*convert to right format */
   strftime ( last_mod, DATESTRBUFSIZE, fmt, local_time);
   struct passwd* user;
@@ -90,8 +90,7 @@ void print_long_format(const char *fname, struct stat *s){
   p[8] = S_IXOTH & s->st_mode ? 'x' : '-';
   p[9] = '\0';
   
- printf("%c%s %ju %s %s %jd %s %s", 
-     ftype, p, hard_link, name, group_n, file_size, last_mod,fname);
+ printf("%c%s %ju %s %s %jd %s %s", ftype, p, hard_link, name, group_n, file_size, last_mod,fname);
  printed_prev = true;
 }
 
