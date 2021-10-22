@@ -14,8 +14,9 @@
 #include <pwd.h>
 #include <grp.h>
 
-// base buffer sized used in program #define BUFFERSIZE 80
+// base buffer sized used in program 
 
+#define BUFFERSIZE 80
 #define DATESTRBUFSIZE 13
 
 // globals used for formatting
@@ -54,6 +55,7 @@ void print_long_format(const char *fname, struct stat *s){
 
     if ((user = getpwuid(uid)) == NULL){
         sprintf(name_buffer, "%d", uid);
+        name = name_buffer;
     }
     else{
         name = user->pw_name;
@@ -62,6 +64,7 @@ void print_long_format(const char *fname, struct stat *s){
     struct group* group;
     if ((group = getgrgid(gid)) == NULL){
         sprintf(group_name_n_buffer, "%d", gid);
+        group_n = group_name_n_buffer;
     }
     else{
         group_n = group->gr_name;
