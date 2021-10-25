@@ -1,7 +1,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <stdbool.h>
-#include <stdio.h>
+#include <stdio.h> 
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -127,7 +127,7 @@ bool print_dirent(struct dirent *de, const char *dirname){
                 path[dnl] = '/';
                 a = 1;
             }
-            strncpy(path+dnl+1, de->d_name, strlen(de->d_name));
+            strncpy(path+dnl+a, de->d_name, strlen(de->d_name));
             path[dnl + a + strlen(de->d_name)] = '\0';
         }
 
@@ -214,7 +214,7 @@ int main(int argc, char *argv[]){
     }
     // print dirs given by args
     if (optind != argc){
-        if (argc - optind > 0){
+        if (argc - optind - 1 > 0){
             print_singular = false;
         }
         for (int i = optind; i < argc; i++){
